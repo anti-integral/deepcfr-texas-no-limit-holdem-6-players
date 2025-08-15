@@ -1208,9 +1208,8 @@ def train_with_mixed_checkpoints(checkpoint_dir, training_model_prefix="t_",
         # Restore the original cfr_traverse method to avoid side effects
         DeepCFRAgent.cfr_traverse = original_cfr_traverse
 
-if __name__ == "__main__":
+def main():
     import argparse
-    
     parser = argparse.ArgumentParser(description='Train a Deep CFR agent for poker')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--iterations', type=int, default=1000, help='Number of CFR iterations')
@@ -1227,9 +1226,8 @@ if __name__ == "__main__":
     parser.add_argument('--strict', action='store_true', help='Enable strict error checking that raises exceptions for invalid game states')
     args = parser.parse_args()
 
-    # Strict training for debug
     set_strict_checking(args.strict)
-    
+
     if args.mixed:
         print(f"Starting mixed checkpoint training with models from: {args.checkpoint_dir}")
         agent, losses, profits, profits_vs_checkpoints = train_with_mixed_checkpoints(
@@ -1268,8 +1266,6 @@ if __name__ == "__main__":
         print(f"Using {args.traversals} traversals per iteration")
         print(f"Logs will be saved to: {args.log_dir}")
         print(f"Models will be saved to: {args.save_dir}")
-        
-        # Train the Deep CFR agent
         agent, losses, profits = train_deep_cfr(
             num_iterations=args.iterations,
             traversals_per_iteration=args.traversals,
@@ -1279,14 +1275,12 @@ if __name__ == "__main__":
             log_dir=args.log_dir,
             verbose=args.verbose
         )
-    
+
     print("\nTraining Summary:")
     print(f"Final loss: {losses[-1]:.6f}")
     if profits:
         print(f"Final average profit vs random: {profits[-1]:.2f}")
     if 'profits_vs_checkpoints' in locals() and profits_vs_checkpoints:
         print(f"Final average profit vs mixed checkpoints: {profits_vs_checkpoints[-1]:.2f}")
-    
-    print("\nTo view training progress:")
-    print(f"Run: tensorboard --logdir={args.log_dir}")
-    print("Then open http://localhost:6006 in your browser")
+if __name__ == "__main__":
+    main()
