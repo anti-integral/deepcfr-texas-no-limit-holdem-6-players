@@ -1075,111 +1075,79 @@ def parse_arguments():
     
     return parser.parse_args()
     
-if __name__ == "__main__":
-    # Parse command line arguments
+def main():
     args = parse_arguments()
-    
-    # Set up the application
     app = QApplication(sys.argv)
     window = PokerGUI()
-    
-    # Initialize with command line arguments if provided
     if args.models or args.models_folder:
         window.agents = [None] * 6
-        
-        # Load specified models
         if args.models:
             window.log_message(f"Loading specified models: {args.models}")
             window.human_player_id = args.position
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            
             model_idx = 0
             for pos in range(6):
                 if pos == window.human_player_id:
                     continue
-                    
                 if model_idx < len(args.models):
                     model_path = args.models[model_idx]
-                    
-                    # Determine model type from filename
                     is_om_model = "om" in os.path.basename(model_path).lower()
-                    
                     try:
                         if is_om_model:
                             agent = DeepCFRAgentWithOpponentModeling(player_id=pos, device=device)
                         else:
                             agent = DeepCFRAgent(player_id=pos, device=device)
-                            
                         agent.load_model(model_path)
                         window.agents[pos] = agent
                         window.log_message(f"Loaded model for Player {pos}: {os.path.basename(model_path)}")
                         model_idx += 1
-                        
                     except Exception as e:
                         window.log_message(f"Error loading model for Player {pos}: {e}")
                         window.log_message("Using random agent instead")
                         window.agents[pos] = RandomAgent(pos)
                 else:
-                    # Use random agent if no more models available
                     window.agents[pos] = RandomAgent(pos)
                     window.log_message(f"Using random agent for Player {pos}")
-        
-        # Load models from folder
         elif args.models_folder:
             window.log_message(f"Loading models from folder: {args.models_folder}")
             window.human_player_id = args.position
-            
-            # Find model files
             model_files = glob.glob(os.path.join(args.models_folder, "*.pt"))
-            
             if not model_files:
                 window.log_message(f"No model files found in {args.models_folder}")
-                # Create random agents
                 for pos in range(6):
                     if pos != window.human_player_id:
                         window.agents[pos] = RandomAgent(pos)
             else:
-                # Use up to 5 random models from the folder
                 num_models = min(5, len(model_files))
                 selected_models = random.sample(model_files, num_models)
                 window.log_message(f"Selected {num_models} models from folder")
-                
-                # Load selected models
                 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                 model_idx = 0
-                
                 for pos in range(6):
                     if pos == window.human_player_id:
                         continue
-                        
                     if model_idx < len(selected_models):
                         model_path = selected_models[model_idx]
-                        
-                        # Determine model type from filename
                         is_om_model = "om" in os.path.basename(model_path).lower()
-                        
                         try:
                             if is_om_model:
                                 agent = DeepCFRAgentWithOpponentModeling(player_id=pos, device=device)
                             else:
                                 agent = DeepCFRAgent(player_id=pos, device=device)
-                                
                             agent.load_model(model_path)
                             window.agents[pos] = agent
                             window.log_message(f"Loaded model for Player {pos}: {os.path.basename(model_path)}")
                             model_idx += 1
-                            
                         except Exception as e:
                             window.log_message(f"Error loading model for Player {pos}: {e}")
                             window.log_message("Using random agent instead")
                             window.agents[pos] = RandomAgent(pos)
                     else:
-                        # Use random agent if no more models available
                         window.agents[pos] = RandomAgent(pos)
                         window.log_message(f"Using random agent for Player {pos}")
-        
-        # Start a new hand with the loaded models
         window.start_new_hand(stake=args.stake, sb=args.sb, bb=args.bb)
-    
     window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

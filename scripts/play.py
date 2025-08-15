@@ -435,7 +435,7 @@ class RandomAgent:
             
             return pkrs.Action(action_enum, additional_raise)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Play poker against random AI models')
     parser.add_argument('--models-dir', type=str, default=None, help='Directory containing model checkpoint files')
     parser.add_argument('--model-pattern', type=str, default="*.pt", help='File pattern to match model files')
@@ -448,10 +448,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-shuffle', action='store_true', help='Do not select new random models for each game')
     parser.add_argument('--strict', action='store_true', help='Enable strict error checking that raises exceptions for invalid game states')
     args = parser.parse_args()
-    
     set_strict_checking(args.strict)
-
-    # Start the game
     play_against_models(
         models_dir=args.models_dir,
         model_pattern=args.model_pattern,
@@ -463,3 +460,6 @@ if __name__ == "__main__":
         verbose=args.verbose,
         shuffle_models=not args.no_shuffle
     )
+
+if __name__ == "__main__":
+    main()
