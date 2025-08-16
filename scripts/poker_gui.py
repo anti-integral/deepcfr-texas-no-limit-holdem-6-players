@@ -17,6 +17,8 @@ from PyQt5.QtGui import QPixmap, QIcon, QFont, QColor, QPalette
 from src.opponent_modeling.deep_cfr_with_opponent_modeling import DeepCFRAgentWithOpponentModeling
 from src.core.deep_cfr import DeepCFRAgent
 from src.core.model import set_verbose
+from scripts.gui_theme import apply_theme
+
 
 class CardWidget(QLabel):
     """Widget to display a playing card"""
@@ -24,18 +26,10 @@ class CardWidget(QLabel):
         super().__init__(parent)
         self.card = card
         self.hidden = hidden
-        self.setMinimumSize(80, 120)
-        self.setMaximumSize(80, 120)
+        self.setMinimumSize(90, 130)
+        self.setMaximumSize(90, 130)
         self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("""
-            QLabel {
-                background-color: white;
-                border: 1px solid #333;
-                border-radius: 5px;
-                padding: 5px;
-                font-size: 20px;
-            }
-        """)
+        self.setProperty("class", "card")
         self.update_display()
     
     def update_display(self):
@@ -46,7 +40,6 @@ class CardWidget(QLabel):
             
         if self.card is None:
             self.setText("")
-            self.setStyleSheet("background-color: transparent; border: none;")
             return
             
         # Convert rank to text representation
@@ -77,18 +70,7 @@ class CardWidget(QLabel):
         rank_text = rank_map[self.card.rank]
         suit_text, color = suit_map[self.card.suit]
         
-        self.setText(f"{rank_text}\n{suit_text}")
-        self.setStyleSheet(f"""
-            QLabel {{
-                background-color: white;
-                border: 1px solid #333;
-                border-radius: 5px;
-                padding: 5px;
-                font-size: 20px;
-                font-weight: bold;
-                color: {color};
-            }}
-        """)
+        self.setText(f'<div style="color:{color}; text-align:center">{rank_text}<br/>{suit_text}</div>')
     
     def set_card(self, card, hidden=False):
         """Set the card to display"""
@@ -106,21 +88,7 @@ class PlayerWidget(QGroupBox):
         self.name = "YOU" if is_human else f"AI Player {player_id}"
         self.setTitle(self.name)
         
-        # Add some styling
-        self.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #999;
-                border-radius: 5px;
-                margin-top: 0.5em;
-                padding: 5px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 3px 0 3px;
-            }
-        """)
+        self.setProperty("playerClass", "normal")
         
         # Create layout
         layout = QVBoxLayout()
@@ -146,37 +114,6 @@ class PlayerWidget(QGroupBox):
         layout.addLayout(info_layout)
         self.setLayout(layout)
         
-        # Highlight current player with a border
-        self.active_style = """
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #5c85d6;
-                background-color: #e6f0ff;
-                border-radius: 5px;
-                margin-top: 0.5em;
-                padding: 5px;
-            }
-        """
-        self.inactive_style = """
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #999;
-                border-radius: 5px;
-                margin-top: 0.5em;
-                padding: 5px;
-            }
-        """
-        
-        self.button_style = """
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #999;
-                background-color: #f7f7c9;
-                border-radius: 5px;
-                margin-top: 0.5em;
-                padding: 5px;
-            }
-        """
 
     def update_hand(self, hand, show_all=False):
         """Update the player's hand display"""
@@ -211,11 +148,14 @@ class PlayerWidget(QGroupBox):
     def highlight_current(self, is_current=False, is_button=False):
         """Highlight the current player"""
         if is_current:
-            self.setStyleSheet(self.active_style)
+            self.setProperty("playerClass", "current")
         elif is_button:
-            self.setStyleSheet(self.button_style)
+            self.setProperty("playerClass", "button")
         else:
-            self.setStyleSheet(self.inactive_style)
+            self.setProperty("playerClass", "normal")
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
 
 
 class PokerTable(QWidget):
@@ -223,6 +163,7 @@ class PokerTable(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumSize(800, 600)
+        self.setObjectName("pokerTable")
         
         # Main layout
         main_layout = QVBoxLayout()
@@ -237,6 +178,7 @@ class PokerTable(QWidget):
         
         # Community cards
         self.community_frame = QFrame()
+        self.community_frame.setObjectName("communityFrame")
         self.community_frame.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.community_frame.setLineWidth(1)
         community_layout = QHBoxLayout()
@@ -302,44 +244,13 @@ class PokerTable(QWidget):
         
         self.setLayout(main_layout)
         
-        # Style the buttons
-        for button in [self.fold_button, self.check_call_button, self.raise_button,
-                      self.half_pot_button, self.pot_button, self.new_hand_button,
-                      self.show_cards_button]:
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: #4c72b0;
-                    border: none;
-                    color: white;
-                    padding: 10px 15px;
-                    font-size: 14px;
-                    border-radius: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #5c85d6;
-                }
-                QPushButton:disabled {
-                    background-color: #cccccc;
-                }
-            """)
-        
-        # Give fold button a reddish color
-        self.fold_button.setStyleSheet("""
-            QPushButton {
-                background-color: #d9534f;
-                border: none;
-                color: white;
-                padding: 10px 15px;
-                font-size: 14px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #c9302c;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-            }
-        """)
+        self.fold_button.setProperty("class", "danger")
+        self.check_call_button.setProperty("class", "primary")
+        self.raise_button.setProperty("class", "primary")
+        self.half_pot_button.setProperty("class", "secondary")
+        self.pot_button.setProperty("class", "secondary")
+        self.new_hand_button.setProperty("class", "primary")
+        self.show_cards_button.setProperty("class", "secondary")
         
         # Disable action buttons initially
         self.set_action_buttons_enabled(False)
@@ -585,7 +496,7 @@ class PokerGUI(QMainWindow):
         self.history_text = QLabel("Welcome to DeepCFR Poker AI! Models will be loaded automatically.")
         self.history_text.setWordWrap(True)
         self.history_text.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        self.history_text.setStyleSheet("background-color: #f5f5f5; padding: 8px; border-radius: 5px;")
+        self.history_text.setObjectName("historyText")
         self.history_text.setMinimumHeight(100)
         
         history_layout.addWidget(history_label)
@@ -1081,6 +992,7 @@ if __name__ == "__main__":
     
     # Set up the application
     app = QApplication(sys.argv)
+    apply_theme(app)
     window = PokerGUI()
     
     # Initialize with command line arguments if provided
